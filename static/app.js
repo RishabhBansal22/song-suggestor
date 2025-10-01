@@ -422,8 +422,6 @@ function createSongCard(song, index) {
         const iframeWrapper = document.createElement('div');
         iframeWrapper.className = 'iframe-wrapper';
         
-        const spotifyUrl = `https://open.spotify.com/embed/track/${song.spotify_id}?utm_source=generator&theme=0`;
-        
         const iframe = document.createElement('iframe');
         iframe.style.borderRadius = '12px';
         iframe.width = '100%';
@@ -432,42 +430,30 @@ function createSongCard(song, index) {
         iframe.allowfullscreen = '';
         iframe.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
         iframe.loading = 'lazy';
-        iframe.src = spotifyUrl;
+        // Add theme parameter and enable IFrame API
+        iframe.src = `https://open.spotify.com/embed/track/${song.spotify_id}?utm_source=generator&theme=0`;
         iframe.setAttribute('data-song-index', index);
         iframe.id = `spotify-player-${index}`;
         
-        // Store reference to this player BEFORE adding click listener
+        // Add click event listener to iframe wrapper to handle play/pause
+        iframeWrapper.addEventListener('click', () => {
+            // Small delay to ensure the click registers on the iframe first
+            setTimeout(() => {
+                pauseOtherPlayers(index);
+            }, 100);
+        });
+        
+        // Store reference to this player
         spotifyPlayers[index] = {
             iframe: iframe,
-            wrapper: iframeWrapper,
-            spotifyUrl: spotifyUrl,
             index: index,
             isPlaying: false
         };
-        
-        // Add multiple event listeners to catch user interaction early
-        const handlePlayerInteraction = (e) => {
-            console.log(`🎯 Player ${index} interaction detected`);
-            // Immediate pause of others, then delay for this player to start
-            pauseOtherPlayers(index);
-        };
-        
-        // Capture phase to get events before they reach iframe
-        iframeWrapper.addEventListener('click', handlePlayerInteraction, true);
-        iframeWrapper.addEventListener('touchstart', handlePlayerInteraction, true);
-        iframeWrapper.addEventListener('mousedown', handlePlayerInteraction, true);
         
         iframeWrapper.appendChild(iframe);
         spotifyEmbed.appendChild(embedHeader);
         spotifyEmbed.appendChild(iframeWrapper);
     }
-    
-    // Song summary
-    const songSummary = document.createElement('div');
-    songSummary.className = 'song-summary';
-    const summaryP = document.createElement('p');
-    summaryP.textContent = song.summary;
-    songSummary.appendChild(summaryP);
     
     // Song actions
     const songActions = document.createElement('div');
@@ -500,7 +486,6 @@ function createSongCard(song, index) {
     if (spotifyEmbed) {
         card.appendChild(spotifyEmbed);
     }
-    card.appendChild(songSummary);
     card.appendChild(songActions);
     
     return card;
@@ -508,53 +493,26 @@ function createSongCard(song, index) {
 
 // Pause all other Spotify players except the one at the given index
 function pauseOtherPlayers(activeIndex) {
-    console.log(`🎵 Pausing all players except ${activeIndex}`);
-    
     spotifyPlayers.forEach((player, index) => {
-        if (index !== activeIndex && player && player.wrapper) {
-            console.log(`⏸️ Stopping player ${index}`);
-            const currentSrc = player.spotifyUrl;
-            
-            // Remove the old iframe completely
-            if (player.iframe && player.iframe.parentNode) {
-                player.iframe.parentNode.removeChild(player.iframe);
-            }
-            
-            // Clear the wrapper to ensure cleanup
-            player.wrapper.innerHTML = '';
-            
-            // Wait a moment before recreating to ensure old iframe is destroyed
-            setTimeout(() => {
-                // Recreate the iframe (paused state)
-                const newIframe = document.createElement('iframe');
-                newIframe.style.borderRadius = '12px';
-                newIframe.width = '100%';
-                newIframe.height = '152';
-                newIframe.frameBorder = '0';
-                newIframe.allowfullscreen = '';
-                newIframe.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
-                newIframe.loading = 'lazy';
-                newIframe.src = currentSrc;
-                newIframe.setAttribute('data-song-index', index);
-                newIframe.id = `spotify-player-${index}`;
+        if (index !== activeIndex && player && player.iframe) {
+            // Reload the iframe to stop playback
+            // This is the most reliable way to stop Spotify embeds
+            const currentSrc = player.iframe.src;
+            if (player.isPlaying) {
+                player.iframe.src = currentSrc;
+                player.isPlaying = false;
                 
-                player.wrapper.appendChild(newIframe);
-                player.iframe = newIframe;
-            }, 50);
-            
-            player.isPlaying = false;
-            
-            // Remove active class from the card
-            const card = document.querySelector(`.song-card[data-song-index="${index}"]`);
-            if (card) {
-                card.classList.remove('player-active');
+                // Remove active class from the card
+                const card = document.querySelector(`.song-card[data-song-index="${index}"]`);
+                if (card) {
+                    card.classList.remove('player-active');
+                }
             }
         }
     });
     
     // Mark the active player as playing
     if (spotifyPlayers[activeIndex]) {
-        console.log(`▶️ Setting player ${activeIndex} as active`);
         spotifyPlayers[activeIndex].isPlaying = true;
         
         // Add active class to the card

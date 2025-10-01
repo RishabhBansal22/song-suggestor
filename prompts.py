@@ -34,10 +34,9 @@ Based on your analysis, provide THREE song suggestions. All songs must be in **{
 Your response must be a JSON object with a "songs" array containing 3 song objects. Each song object must include:
 1. Song_title: The title of the recommended song
 2. Artist: The artist who performed the song
-3. Summary: A short and sweet summary in 25 words explaining what you analyzed in the image and why this specific song matches. If user context was provided, explicitly reference it in your summary to show you considered it.
 
 **IMPORTANT:** Return exactly 3 songs, each offering a slightly different mood interpretation while matching the overall image vibe.
 
-Format your response as valid JSON with the structure: {{"songs": [{{Song_title, Artist, Summary}}, {{Song_title, Artist, Summary}}, {{Song_title, Artist, Summary}}]}}
+Format your response as valid JSON with the structure: {{"songs": [{{Song_title, Artist}}, {{Song_title, Artist}}, {{Song_title, Artist}}]}}
 """
     return song_sugg_prompt
