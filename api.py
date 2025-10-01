@@ -26,11 +26,11 @@ allowed_origins = os.getenv(
 # Add wildcard support for Vercel preview deployments
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=allowed_origins,  # Temporarily allow all origins to test
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    
+    expose_headers=["*"],  # Add this
 )
 
 # Create uploads directory
