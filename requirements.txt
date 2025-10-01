@@ -1,0 +1,4 @@
+requests
+spotify
+python-dotenv
+google-genai
