@@ -275,13 +275,14 @@ class Gemini:
 
     
 
-    def song_title_gen(self, image_path: str, language: str = "English", genre:str="Asthetic") -> str:
+    def song_title_gen(self, image_path: str, language: str = "English", genre:str="Asthetic", context: str = None) -> str:
         """Generate song suggestion based on image analysis.
         
         Args:
             image_path: Path to the image file
             language: Language preference for the song (default: English)
             genre: Optional genre preference
+            context: Optional user-provided context about the image
             
         Returns:
             JSON string containing song suggestion
@@ -293,7 +294,7 @@ class Gemini:
         try:
             # Build prompt based on parameters
             genre_text = f"The preferred genre is {genre}." if genre else ""
-            prompt = main_prompt(language, genre_text)
+            prompt = main_prompt(language, genre_text, context)
             
             # Detect MIME type automatically
             mime_type = self._detect_mime_type(image_path)
