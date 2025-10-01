@@ -14,6 +14,7 @@ const songTitle = document.getElementById('songTitle');
 const songArtist = document.getElementById('songArtist');
 const songSummary = document.getElementById('songSummary');
 const spotifyLink = document.getElementById('spotifyLink');
+const googleSearchLink = document.getElementById('googleSearchLink');
 const tryAgainBtn = document.getElementById('tryAgainBtn');
 const spotifyEmbed = document.getElementById('spotifyEmbed');
 const spotifyPlayer = document.getElementById('spotifyPlayer');
@@ -27,7 +28,7 @@ let uploadedImageDataUrl = null;
 let loadingMessageInterval = null;
 
 // API Base URL - change this if deploying
-const API_BASE_URL = 'https://song-suggestor-production.up.railway.app';  // Remove trailing slash
+const API_BASE_URL = 'https://song-suggestor-production.up.railway.app';  // Local development server
 
 // Loading Messages Array - Persuasive and engaging messages
 const loadingMessages = [
@@ -157,6 +158,13 @@ async function handleSubmit() {
     submitBtn.classList.add('hidden');
     loading.classList.remove('hidden');
     
+    // Hide info sections and footer when generating song
+    const infoSections = document.querySelectorAll('.info-section');
+    infoSections.forEach(section => section.classList.add('hidden'));
+    
+    const footer = document.querySelector('.footer');
+    if (footer) footer.classList.add('hidden');
+    
     // Start loading message rotation
     startLoadingMessages();
     
@@ -200,6 +208,13 @@ async function handleSubmit() {
         uploadSection.classList.remove('hidden');
         document.querySelector('.options-section').classList.remove('hidden');
         submitBtn.classList.remove('hidden');
+        
+        // Show info sections and footer again on error
+        const infoSections = document.querySelectorAll('.info-section');
+        infoSections.forEach(section => section.classList.remove('hidden'));
+        
+        const footer = document.querySelector('.footer');
+        if (footer) footer.classList.remove('hidden');
     }
 }
 
@@ -255,8 +270,20 @@ function displayResults(data) {
     if (data.spotify_url) {
         spotifyLink.href = data.spotify_url;
         spotifyLink.classList.remove('hidden');
+        googleSearchLink.classList.add('hidden');
+    } else if (data.google_search_url) {
+        // Show Google search link when Spotify is not available
+        googleSearchLink.href = data.google_search_url;
+        googleSearchLink.classList.remove('hidden');
+        spotifyLink.classList.add('hidden');
+        
+        // Show notification about fallback
+        if (data.spotify_error) {
+            showNotification('🔍 Song not found on Spotify, try Google search!', 'info');
+        }
     } else {
         spotifyLink.classList.add('hidden');
+        googleSearchLink.classList.add('hidden');
     }
     
     // Display Spotify Embed if track ID is available
@@ -309,6 +336,13 @@ function resetApp() {
     uploadSection.classList.remove('hidden');
     document.querySelector('.options-section').classList.remove('hidden');
     submitBtn.classList.remove('hidden');
+    
+    // Show info sections and footer again when resetting
+    const infoSections = document.querySelectorAll('.info-section');
+    infoSections.forEach(section => section.classList.remove('hidden'));
+    
+    const footer = document.querySelector('.footer');
+    if (footer) footer.classList.remove('hidden');
     
     // Scroll to top smoothly
     window.scrollTo({ top: 0, behavior: 'smooth' });
