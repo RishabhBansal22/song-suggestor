@@ -241,12 +241,17 @@ body {
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
     margin: 1.25rem 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .option-group {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    min-width: 0;
+    max-width: 100%;
 }
 
 .option-group label {
@@ -266,6 +271,9 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     outline: none;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .select-input:hover {
@@ -1125,17 +1133,33 @@ body {
         padding: 1rem;
         border-radius: 18px;
         width: 100%;
+        box-sizing: border-box;
     }
     
     .options-section {
         grid-template-columns: 1fr;
         gap: 1rem;
+        width: 100%;
+    }
+    
+    .option-group {
+        width: 100%;
+        max-width: 100%;
     }
     
     .select-input {
         padding: 1rem;
-        font-size: 1rem;
+        font-size: 0.9rem;
         min-height: 48px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        word-wrap: break-word;
+    }
+    
+    .select-input option {
+        font-size: 0.9rem;
+        padding: 0.5rem;
     }
     
     .upload-area {
