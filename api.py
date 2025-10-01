@@ -61,7 +61,8 @@ async def root():
 async def suggest_song(
     image: UploadFile = File(...),
     language: str = Form("English"),
-    genre: str = Form("Popular")
+    genre: str = Form("Popular"),
+    context: str = Form(None)
 ):
     """
     Generate song suggestion based on uploaded image.
@@ -70,6 +71,7 @@ async def suggest_song(
         image: Uploaded image file
         language: Preferred song language (default: English)
         genre: Preferred genre/vibe (default: Popular)
+        context: Optional context about the image (e.g., "me with my brother")
     
     Returns:
         SongResponse with song details and Spotify info
@@ -88,6 +90,8 @@ async def suggest_song(
         
         logger.info(f"Processing image: {image.filename}")
         logger.info(f"Language: {language}, Genre: {genre}")
+        if context:
+            logger.info(f"Context: {context}")
         
         # Write file to disk
         with open(temp_file_path, "wb") as f:
@@ -102,7 +106,8 @@ async def suggest_song(
             song_json = gemini_client.song_title_gen(
                 str(temp_file_path),
                 language=language,
-                genre=genre
+                genre=genre,
+                context=context
             )
             
             # Parse AI response

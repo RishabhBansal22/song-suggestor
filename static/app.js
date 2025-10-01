@@ -7,6 +7,7 @@ const previewImg = document.getElementById('previewImg');
 const removeBtn = document.getElementById('removeBtn');
 const languageSelect = document.getElementById('languageSelect');
 const genreSelect = document.getElementById('genreSelect');
+const contextInput = document.getElementById('contextInput');
 const submitBtn = document.getElementById('submitBtn');
 const loading = document.getElementById('loading');
 const results = document.getElementById('results');
@@ -151,6 +152,7 @@ async function handleSubmit() {
     
     const language = languageSelect.value;
     const genre = genreSelect.value;
+    const context = contextInput.value.trim();
     
     // Show loading state
     uploadSection.classList.add('hidden');
@@ -174,6 +176,9 @@ async function handleSubmit() {
         formData.append('image', selectedFile);
         formData.append('language', language);
         formData.append('genre', genre);
+        if (context) {
+            formData.append('context', context);
+        }
         
         // Make API request
         const response = await fetch(`${API_BASE_URL}/suggest-song`, {
