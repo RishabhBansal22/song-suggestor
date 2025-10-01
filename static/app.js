@@ -24,9 +24,29 @@ const igSongArtist = document.getElementById('igSongArtist');
 // State
 let selectedFile = null;
 let uploadedImageDataUrl = null;
+let loadingMessageInterval = null;
 
 // API Base URL - change this if deploying
 const API_BASE_URL = 'https://song-suggestor-production.up.railway.app';  // Remove trailing slash
+
+// Loading Messages Array - Persuasive and engaging messages
+const loadingMessages = [
+    "Hang In There, Your Perfect Track Is Loading ✨",
+    "Curating The Ideal Vibe Just For You 🎵",
+    "Analyzing Your Aesthetic Energy 📸",
+    "Matching Beats To Your Mood 💫",
+    "Your Soundtrack Is Almost Ready 🎧",
+    "Finding That Perfect Story Song 📱",
+    "Vibes Are Loading... This Is Gonna Be Good 🔥",
+    "Creating Your Next Main Character Moment ✨",
+    "Almost There, Trust The Process 💜",
+    "Your Perfect Match Is Worth The Wait 🎯",
+    "Cooking Up Something Special For You 👨‍🍳",
+    "The Algorithm Is Working Its Magic ✨",
+    "Your Story Deserves The Perfect Soundtrack 📖",
+    "Matching Frequencies To Your Energy 🌟",
+    "Just A Few More Seconds Of Patience 💎"
+];
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -137,6 +157,9 @@ async function handleSubmit() {
     submitBtn.classList.add('hidden');
     loading.classList.remove('hidden');
     
+    // Start loading message rotation
+    startLoadingMessages();
+    
     try {
         // Create form data
         const formData = new FormData();
@@ -157,12 +180,19 @@ async function handleSubmit() {
         
         const data = await response.json();
         
+        // Stop loading message rotation
+        stopLoadingMessages();
+        
         // Hide loading and show results
         loading.classList.add('hidden');
         displayResults(data);
         
     } catch (error) {
         console.error('Error:', error);
+        
+        // Stop loading message rotation
+        stopLoadingMessages();
+        
         loading.classList.add('hidden');
         showNotification(`😢 ${error.message}`, 'error');
         
@@ -170,6 +200,42 @@ async function handleSubmit() {
         uploadSection.classList.remove('hidden');
         document.querySelector('.options-section').classList.remove('hidden');
         submitBtn.classList.remove('hidden');
+    }
+}
+
+// Loading Message Management
+function startLoadingMessages() {
+    const loadingMessage = document.getElementById('loadingMessage');
+    let currentIndex = 0;
+    
+    // Set the first message
+    loadingMessage.textContent = loadingMessages[currentIndex];
+    
+    // Create interval to cycle through messages
+    loadingMessageInterval = setInterval(() => {
+        // Fade out current message
+        loadingMessage.classList.add('fade-out');
+        
+        setTimeout(() => {
+            // Update to next message
+            currentIndex = (currentIndex + 1) % loadingMessages.length;
+            loadingMessage.textContent = loadingMessages[currentIndex];
+            
+            // Fade in new message
+            loadingMessage.classList.remove('fade-out');
+            loadingMessage.classList.add('fade-in');
+            
+            setTimeout(() => {
+                loadingMessage.classList.remove('fade-in');
+            }, 300);
+        }, 300);
+    }, 2500); // Change message every 2.5 seconds
+}
+
+function stopLoadingMessages() {
+    if (loadingMessageInterval) {
+        clearInterval(loadingMessageInterval);
+        loadingMessageInterval = null;
     }
 }
 
