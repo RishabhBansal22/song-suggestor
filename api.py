@@ -34,6 +34,13 @@ app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
 UPLOAD_DIR = Path(__file__).parent / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
 
+def create_google_search_url(song_title: str, artist: str) -> str:
+    """Create a Google search URL for the given song and artist."""
+    import urllib.parse
+    query = f"{song_title} {artist} song"
+    encoded_query = urllib.parse.quote_plus(query)
+    return f"https://www.google.com/search?q={encoded_query}"
+
 class SongResponse(BaseModel):
     """Response model for song suggestions."""
     song_title: str
@@ -42,6 +49,8 @@ class SongResponse(BaseModel):
     spotify_url: str | None = None
     preview_url: str | None = None
     spotify_id: str | None = None
+    google_search_url: str | None = None
+    spotify_error: bool = False
 
 @app.get("/")
 async def root():
@@ -105,9 +114,19 @@ async def suggest_song(
             if not track_title or not artist_name:
                 raise ValueError("Invalid song data from AI")
             
-            # Search on Spotify
-            spotify_client = Spotify()
-            track_info = spotify_client.search_track(track_title, artist_name)
+            # Search on Spotify with error handling
+            spotify_error = False
+            track_info = None
+            
+            try:
+                spotify_client = Spotify()
+                track_info = spotify_client.search_track(track_title, artist_name)
+            except Exception as e:
+                logger.warning(f"Spotify search failed: {e}")
+                spotify_error = True
+            
+            # Create Google search URL as fallback
+            google_search_url = create_google_search_url(track_title, artist_name)
             
             # Build response
             response_data = {
@@ -116,7 +135,9 @@ async def suggest_song(
                 "summary": summary,
                 "spotify_url": track_info.get("spotify_url") if track_info else None,
                 "preview_url": track_info.get("preview_url") if track_info else None,
-                "spotify_id": track_info.get("id") if track_info else None
+                "spotify_id": track_info.get("id") if track_info else None,
+                "google_search_url": google_search_url,
+                "spotify_error": spotify_error or track_info is None
             }
             
             logger.info(f"Song suggestion generated: {track_title} by {artist_name}")
