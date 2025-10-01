@@ -20,6 +20,7 @@ const igSongArtist = document.getElementById('igSongArtist');
 let selectedFile = null;
 let uploadedImageDataUrl = null;
 let loadingMessageInterval = null;
+let spotifyPlayers = []; // Array to track all Spotify iframe players
 
 // API Base URL - dynamically configured
 // For Vercel deployment, you need to set this in Vercel dashboard as environment variable
@@ -56,6 +57,7 @@ const loadingMessages = [
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
+    setupSpotifyMessageListener();
 });
 
 function setupEventListeners() {
@@ -75,6 +77,39 @@ function setupEventListeners() {
     
     // Try again button
     tryAgainBtn.addEventListener('click', resetApp);
+}
+
+// Setup listener for Spotify embed messages
+function setupSpotifyMessageListener() {
+    window.addEventListener('message', (event) => {
+        // Verify the message is from Spotify
+        if (event.origin !== 'https://open.spotify.com') {
+            return;
+        }
+        
+        try {
+            const data = JSON.parse(event.data);
+            
+            // Check if playback started
+            if (data.type === 'playback_update' && data.isPaused === false) {
+                // Find which iframe sent this message
+                const activeIframe = event.source;
+                let activeIndex = -1;
+                
+                spotifyPlayers.forEach((player, index) => {
+                    if (player && player.iframe && player.iframe.contentWindow === activeIframe) {
+                        activeIndex = index;
+                    }
+                });
+                
+                if (activeIndex !== -1) {
+                    pauseOtherPlayers(activeIndex);
+                }
+            }
+        } catch (e) {
+            // Ignore parsing errors for non-JSON messages
+        }
+    });
 }
 
 // File Selection Handlers
@@ -277,6 +312,9 @@ function displayResults(data) {
     const songsContainer = document.getElementById('songsContainer');
     songsContainer.innerHTML = ''; // Clear any existing content
     
+    // Reset spotify players array
+    spotifyPlayers = [];
+    
     // Display uploaded image in IG story preview (use first song)
     if (uploadedImageDataUrl && songs.length > 0) {
         resultImagePreview.src = uploadedImageDataUrl;
@@ -307,6 +345,38 @@ function displayResults(data) {
     
     // Confetti effect
     createConfetti();
+    
+    // Setup intersection observer for auto-pause on scroll (mobile horizontal scroll)
+    setupScrollObserver();
+}
+
+// Setup intersection observer to pause players when scrolling away
+function setupScrollObserver() {
+    const options = {
+        root: document.getElementById('songsContainer'),
+        threshold: 0.5 // Trigger when 50% of the card is visible
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const songIndex = parseInt(entry.target.getAttribute('data-song-index'));
+            
+            if (!entry.isIntersecting && spotifyPlayers[songIndex]) {
+                // Card scrolled out of view, pause it
+                const player = spotifyPlayers[songIndex];
+                if (player.isPlaying && player.iframe) {
+                    const currentSrc = player.iframe.src;
+                    player.iframe.src = currentSrc;
+                    player.isPlaying = false;
+                }
+            }
+        });
+    }, options);
+    
+    // Observe all song cards
+    document.querySelectorAll('.song-card').forEach(card => {
+        observer.observe(card);
+    });
 }
 
 // Create a song card element
@@ -360,7 +430,25 @@ function createSongCard(song, index) {
         iframe.allowfullscreen = '';
         iframe.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
         iframe.loading = 'lazy';
-        iframe.src = `https://open.spotify.com/embed/track/${song.spotify_id}?utm_source=generator`;
+        // Add theme parameter and enable IFrame API
+        iframe.src = `https://open.spotify.com/embed/track/${song.spotify_id}?utm_source=generator&theme=0`;
+        iframe.setAttribute('data-song-index', index);
+        iframe.id = `spotify-player-${index}`;
+        
+        // Add click event listener to iframe wrapper to handle play/pause
+        iframeWrapper.addEventListener('click', () => {
+            // Small delay to ensure the click registers on the iframe first
+            setTimeout(() => {
+                pauseOtherPlayers(index);
+            }, 100);
+        });
+        
+        // Store reference to this player
+        spotifyPlayers[index] = {
+            iframe: iframe,
+            index: index,
+            isPlaying: false
+        };
         
         iframeWrapper.appendChild(iframe);
         spotifyEmbed.appendChild(embedHeader);
@@ -411,10 +499,50 @@ function createSongCard(song, index) {
     return card;
 }
 
+// Pause all other Spotify players except the one at the given index
+function pauseOtherPlayers(activeIndex) {
+    spotifyPlayers.forEach((player, index) => {
+        if (index !== activeIndex && player && player.iframe) {
+            // Reload the iframe to stop playback
+            // This is the most reliable way to stop Spotify embeds
+            const currentSrc = player.iframe.src;
+            if (player.isPlaying) {
+                player.iframe.src = currentSrc;
+                player.isPlaying = false;
+                
+                // Remove active class from the card
+                const card = document.querySelector(`.song-card[data-song-index="${index}"]`);
+                if (card) {
+                    card.classList.remove('player-active');
+                }
+            }
+        }
+    });
+    
+    // Mark the active player as playing
+    if (spotifyPlayers[activeIndex]) {
+        spotifyPlayers[activeIndex].isPlaying = true;
+        
+        // Add active class to the card
+        const activeCard = document.querySelector(`.song-card[data-song-index="${activeIndex}"]`);
+        if (activeCard) {
+            activeCard.classList.add('player-active');
+        }
+    }
+}
+
 // Reset App
 function resetApp() {
     // Reset state
     clearImage();
+    
+    // Stop and clear all spotify players
+    spotifyPlayers.forEach(player => {
+        if (player && player.iframe) {
+            player.iframe.src = '';
+        }
+    });
+    spotifyPlayers = [];
     
     // Hide results and play button
     results.classList.add('hidden');
