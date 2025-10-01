@@ -20,7 +20,7 @@ app = FastAPI(title="Song Suggestor API", version="1.0.0")
 # Get allowed origins from environment variable or use defaults
 allowed_origins = os.getenv(
     "ALLOWED_ORIGINS",
-    "http://localhost:3000,http://localhost:8000,http://127.0.0.1:8000,http://localhost:5500"
+    "http://localhost:3000,http://localhost:8000,https://song-suggestor-rosy.vercel.app,https://song-suggestor-production.up.railway.app"
 ).split(",")
 
 # Add wildcard support for Vercel preview deployments
@@ -30,13 +30,8 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    allow_origin_regex=r"https://.*\.vercel\.app$",  # Allow all Vercel deployments
+    
 )
-
-# Mount static files directory for frontend
-static_path = Path(__file__).parent / "static"
-static_path.mkdir(exist_ok=True)
-app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
 
 # Create uploads directory
 UPLOAD_DIR = Path(__file__).parent / "uploads"
