@@ -41,8 +41,8 @@ def create_google_search_url(song_title: str, artist: str) -> str:
     encoded_query = urllib.parse.quote_plus(query)
     return f"https://www.google.com/search?q={encoded_query}"
 
-class SongResponse(BaseModel):
-    """Response model for song suggestions."""
+class SingleSongResponse(BaseModel):
+    """Response model for a single song."""
     song_title: str
     artist: str
     summary: str
@@ -51,6 +51,10 @@ class SongResponse(BaseModel):
     spotify_id: str | None = None
     google_search_url: str | None = None
     spotify_error: bool = False
+
+class SongResponse(BaseModel):
+    """Response model for multiple song suggestions."""
+    songs: list[SingleSongResponse]
 
 @app.get("/")
 async def root():
@@ -65,7 +69,7 @@ async def suggest_song(
     context: str = Form(None)
 ):
     """
-    Generate song suggestion based on uploaded image.
+    Generate 3 song suggestions based on uploaded image.
     
     Args:
         image: Uploaded image file
@@ -74,7 +78,7 @@ async def suggest_song(
         context: Optional context about the image (e.g., "me with my brother")
     
     Returns:
-        SongResponse with song details and Spotify info
+        SongResponse with 3 songs, each with details and Spotify info
     """
     try:
         # Validate file type
@@ -102,7 +106,7 @@ async def suggest_song(
             # Initialize Gemini AI client
             gemini_client = Gemini()
             
-            # Generate song suggestion
+            # Generate song suggestions (3 songs)
             song_json = gemini_client.song_title_gen(
                 str(temp_file_path),
                 language=language,
@@ -111,42 +115,66 @@ async def suggest_song(
             )
             
             # Parse AI response
-            song_data = json.loads(song_json)
-            track_title = song_data.get("Song_title")
-            artist_name = song_data.get("Artist")
-            summary = song_data.get("Summary", "")
+            songs_data = json.loads(song_json)
+            song_list = songs_data.get("songs", [])
             
-            if not track_title or not artist_name:
-                raise ValueError("Invalid song data from AI")
+            if not song_list or len(song_list) == 0:
+                raise ValueError("No songs returned from AI")
             
-            # Search on Spotify with error handling
-            spotify_error = False
-            track_info = None
-            
+            # Initialize Spotify client once for all searches
+            spotify_client = None
             try:
                 spotify_client = Spotify()
-                track_info = spotify_client.search_track(track_title, artist_name)
             except Exception as e:
-                logger.warning(f"Spotify search failed: {e}")
-                spotify_error = True
+                logger.warning(f"Failed to initialize Spotify client: {e}")
             
-            # Create Google search URL as fallback
-            google_search_url = create_google_search_url(track_title, artist_name)
+            # Process each song with individual error handling
+            processed_songs = []
+            for idx, song_data in enumerate(song_list):
+                track_title = song_data.get("Song_title")
+                artist_name = song_data.get("Artist")
+                summary = song_data.get("Summary", "")
+                
+                if not track_title or not artist_name:
+                    logger.warning(f"Invalid song data for song {idx + 1}, skipping")
+                    continue
+                
+                # Search on Spotify with error handling per song
+                spotify_error = False
+                track_info = None
+                
+                if spotify_client:
+                    try:
+                        track_info = spotify_client.search_track(track_title, artist_name)
+                        logger.info(f"Song {idx + 1}: Found on Spotify - {track_title} by {artist_name}")
+                    except Exception as e:
+                        logger.warning(f"Spotify search failed for song {idx + 1} ({track_title}): {e}")
+                        spotify_error = True
+                else:
+                    spotify_error = True
+                
+                # Create Google search URL as fallback
+                google_search_url = create_google_search_url(track_title, artist_name)
+                
+                # Build song response
+                song_response = {
+                    "song_title": track_title,
+                    "artist": artist_name,
+                    "summary": summary,
+                    "spotify_url": track_info.get("spotify_url") if track_info else None,
+                    "preview_url": track_info.get("preview_url") if track_info else None,
+                    "spotify_id": track_info.get("id") if track_info else None,
+                    "google_search_url": google_search_url,
+                    "spotify_error": spotify_error or track_info is None
+                }
+                
+                processed_songs.append(song_response)
             
-            # Build response
-            response_data = {
-                "song_title": track_title,
-                "artist": artist_name,
-                "summary": summary,
-                "spotify_url": track_info.get("spotify_url") if track_info else None,
-                "preview_url": track_info.get("preview_url") if track_info else None,
-                "spotify_id": track_info.get("id") if track_info else None,
-                "google_search_url": google_search_url,
-                "spotify_error": spotify_error or track_info is None
-            }
+            if not processed_songs:
+                raise ValueError("No valid songs could be processed")
             
-            logger.info(f"Song suggestion generated: {track_title} by {artist_name}")
-            return response_data
+            logger.info(f"Successfully processed {len(processed_songs)} songs")
+            return {"songs": processed_songs}
             
         finally:
             # Clean up temporary file

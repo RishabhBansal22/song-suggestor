@@ -11,14 +11,7 @@ const contextInput = document.getElementById('contextInput');
 const submitBtn = document.getElementById('submitBtn');
 const loading = document.getElementById('loading');
 const results = document.getElementById('results');
-const songTitle = document.getElementById('songTitle');
-const songArtist = document.getElementById('songArtist');
-const songSummary = document.getElementById('songSummary');
-const spotifyLink = document.getElementById('spotifyLink');
-const googleSearchLink = document.getElementById('googleSearchLink');
 const tryAgainBtn = document.getElementById('tryAgainBtn');
-const spotifyEmbed = document.getElementById('spotifyEmbed');
-const spotifyPlayer = document.getElementById('spotifyPlayer');
 const resultImagePreview = document.getElementById('resultImagePreview');
 const igSongTitle = document.getElementById('igSongTitle');
 const igSongArtist = document.getElementById('igSongArtist');
@@ -29,7 +22,7 @@ let uploadedImageDataUrl = null;
 let loadingMessageInterval = null;
 
 // API Base URL - change this if deploying
-const API_BASE_URL = 'http://127.0.0.1:8000';  // Local development server
+const API_BASE_URL = 'https://song-suggestor-production.up.railway.app';  // Local development server
 
 // Loading Messages Array - Persuasive and engaging messages
 const loadingMessages = [
@@ -261,58 +254,39 @@ function stopLoadingMessages() {
 
 // Display Results
 function displayResults(data) {
-    songTitle.textContent = data.song_title;
-    songArtist.textContent = `by ${data.artist}`;
-    songSummary.textContent = data.summary;
+    // data.songs is an array of song objects
+    const songs = data.songs || [];
     
-    // Display uploaded image in IG story preview
-    if (uploadedImageDataUrl) {
+    if (songs.length === 0) {
+        showNotification('😢 No songs found', 'error');
+        resetApp();
+        return;
+    }
+    
+    // Get the songs container
+    const songsContainer = document.getElementById('songsContainer');
+    songsContainer.innerHTML = ''; // Clear any existing content
+    
+    // Display uploaded image in IG story preview (use first song)
+    if (uploadedImageDataUrl && songs.length > 0) {
         resultImagePreview.src = uploadedImageDataUrl;
-        igSongTitle.textContent = data.song_title;
-        igSongArtist.textContent = data.artist;
+        igSongTitle.textContent = songs[0].song_title;
+        igSongArtist.textContent = songs[0].artist;
     }
     
-    if (data.spotify_url) {
-        spotifyLink.href = data.spotify_url;
-        spotifyLink.classList.remove('hidden');
-        googleSearchLink.classList.add('hidden');
-    } else if (data.google_search_url) {
-        // Show Google search link when Spotify is not available
-        googleSearchLink.href = data.google_search_url;
-        googleSearchLink.classList.remove('hidden');
-        spotifyLink.classList.add('hidden');
-        
-        // Show notification about fallback
-        if (data.spotify_error) {
-            showNotification('🔍 Song not found on Spotify, try Google search!', 'info');
-        }
-    } else {
-        spotifyLink.classList.add('hidden');
-        googleSearchLink.classList.add('hidden');
-    }
+    // Create a card for each song
+    songs.forEach((song, index) => {
+        const songCard = createSongCard(song, index);
+        songsContainer.appendChild(songCard);
+    });
     
-    // Display Spotify Embed if track ID is available
-    if (data.spotify_id) {
-        const embedUrl = `https://open.spotify.com/embed/track/${data.spotify_id}?utm_source=generator`;
-        spotifyPlayer.src = embedUrl;
-        spotifyEmbed.classList.remove('hidden');
-    } else {
-        spotifyEmbed.classList.add('hidden');
-    }
-    
-    // Setup play button on IG preview to scroll to and highlight embed player
+    // Setup play button on IG preview to scroll to first song
     const playButton = document.getElementById('igPlayButton');
-    if (playButton && data.spotify_id) {
+    if (playButton && songs[0].spotify_id) {
         playButton.onclick = (e) => {
             e.preventDefault();
-            // Scroll to the Spotify embed player
-            spotifyEmbed.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
-            // Add a pulse highlight effect
-            spotifyEmbed.style.animation = 'none';
-            setTimeout(() => {
-                spotifyEmbed.style.animation = 'highlightPulse 0.6s ease-out';
-            }, 10);
+            // Scroll to the songs container
+            songsContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
             
             showNotification('✨ scroll down to vibe check', 'info');
         };
@@ -323,6 +297,108 @@ function displayResults(data) {
     
     // Confetti effect
     createConfetti();
+}
+
+// Create a song card element
+function createSongCard(song, index) {
+    const card = document.createElement('div');
+    card.className = 'song-card';
+    card.setAttribute('data-song-index', index);
+    
+    // Song info section
+    const songInfo = document.createElement('div');
+    songInfo.className = 'song-info';
+    
+    const songNumber = document.createElement('div');
+    songNumber.className = 'song-number';
+    songNumber.textContent = `Song ${index + 1}`;
+    
+    const songTitle = document.createElement('h3');
+    songTitle.className = 'song-title';
+    songTitle.textContent = song.song_title;
+    
+    const songArtist = document.createElement('p');
+    songArtist.className = 'song-artist';
+    songArtist.textContent = `by ${song.artist}`;
+    
+    songInfo.appendChild(songNumber);
+    songInfo.appendChild(songTitle);
+    songInfo.appendChild(songArtist);
+    
+    // Spotify Embed section (if available)
+    let spotifyEmbed = null;
+    if (song.spotify_id) {
+        spotifyEmbed = document.createElement('div');
+        spotifyEmbed.className = 'spotify-embed';
+        
+        const embedHeader = document.createElement('div');
+        embedHeader.className = 'embed-header';
+        embedHeader.innerHTML = `
+            <span class="embed-icon">🎧</span>
+            <span>Listen First</span>
+            <span class="play-hint">▶️ Tap To Play</span>
+        `;
+        
+        const iframeWrapper = document.createElement('div');
+        iframeWrapper.className = 'iframe-wrapper';
+        
+        const iframe = document.createElement('iframe');
+        iframe.style.borderRadius = '12px';
+        iframe.width = '100%';
+        iframe.height = '152';
+        iframe.frameBorder = '0';
+        iframe.allowfullscreen = '';
+        iframe.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
+        iframe.loading = 'lazy';
+        iframe.src = `https://open.spotify.com/embed/track/${song.spotify_id}?utm_source=generator`;
+        
+        iframeWrapper.appendChild(iframe);
+        spotifyEmbed.appendChild(embedHeader);
+        spotifyEmbed.appendChild(iframeWrapper);
+    }
+    
+    // Song summary
+    const songSummary = document.createElement('div');
+    songSummary.className = 'song-summary';
+    const summaryP = document.createElement('p');
+    summaryP.textContent = song.summary;
+    songSummary.appendChild(summaryP);
+    
+    // Song actions
+    const songActions = document.createElement('div');
+    songActions.className = 'song-actions';
+    
+    if (song.spotify_url) {
+        const spotifyLink = document.createElement('a');
+        spotifyLink.href = song.spotify_url;
+        spotifyLink.target = '_blank';
+        spotifyLink.className = 'btn-spotify';
+        spotifyLink.innerHTML = `
+            <span class="spotify-icon">🎵</span>
+            Open In Spotify
+        `;
+        songActions.appendChild(spotifyLink);
+    } else if (song.google_search_url) {
+        const googleLink = document.createElement('a');
+        googleLink.href = song.google_search_url;
+        googleLink.target = '_blank';
+        googleLink.className = 'btn-google';
+        googleLink.innerHTML = `
+            <span class="google-icon">🔍</span>
+            Search On Google
+        `;
+        songActions.appendChild(googleLink);
+    }
+    
+    // Assemble the card
+    card.appendChild(songInfo);
+    if (spotifyEmbed) {
+        card.appendChild(spotifyEmbed);
+    }
+    card.appendChild(songSummary);
+    card.appendChild(songActions);
+    
+    return card;
 }
 
 // Reset App
