@@ -25,6 +25,10 @@ class Song(BaseModel):
     Artist: str
     Summary: str  # Brief explanation of image analysis and song selection reasoning
 
+class Songs(BaseModel):
+    """Pydantic model for multiple song suggestions."""
+    songs: list[Song]  # List of 3 song suggestions
+
 class Spotify:
     """Spotify API client for searching and retrieving track information."""
     
@@ -298,7 +302,7 @@ class Gemini:
     
 
     def song_title_gen(self, image_path: str, language: str = "English", genre:str="Asthetic", context: str = None) -> str:
-        """Generate song suggestion based on image analysis.
+        """Generate multiple song suggestions based on image analysis.
         
         Args:
             image_path: Path to the image file
@@ -307,7 +311,7 @@ class Gemini:
             context: Optional user-provided context about the image
             
         Returns:
-            JSON string containing song suggestion
+            JSON string containing 3 song suggestions
             
         Raises:
             FileNotFoundError: If image file doesn't exist
@@ -332,18 +336,18 @@ class Gemini:
                 ],
                 config={
                     "response_mime_type": "application/json",
-                    "response_schema": Song
+                    "response_schema": Songs
                 }
             )
 
             if not response.text:
                 raise ValueError("Empty response from Gemini AI")
                 
-            logger.info(f"Song suggestion generated for image: {image_path}")
+            logger.info(f"Song suggestions generated for image: {image_path}")
             return response.text
             
         except Exception as e:
-            logger.error(f"Error generating song suggestion for {image_path}: {e}")
+            logger.error(f"Error generating song suggestions for {image_path}: {e}")
             raise
         
 

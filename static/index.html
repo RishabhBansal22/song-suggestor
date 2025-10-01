@@ -114,12 +114,13 @@
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Results Section -->
-            <div class="results hidden" id="results">
+        <!-- Results Section -->
+        <div class="results hidden" id="results">
                 <div class="result-header">
-                    <h2>This One's For You 🎯</h2>
-                    <p class="result-subheader">Ready For Your Story</p>
+                    <h2>Your Perfect Playlist 🎯</h2>
+                    <p class="result-subheader">3 Songs Ready For Your Story</p>
                 </div>
 
                 <!-- IG Story Preview -->
@@ -133,7 +134,7 @@
                             <img id="resultImagePreview" src="" alt="Your image">
                             
                             <!-- Play Button Overlay -->
-                            <button class="ig-play-button hidden" id="igPlayButton" title="Play song preview" aria-label="Play song preview">
+                            <button class="ig-play-button hidden" id="igPlayButton" title="View songs" aria-label="View songs">
                                 <span class="play-icon">▶️</span>
                             </button>
                             
@@ -150,49 +151,25 @@
                     </div>
                 </div>
                 
-                <div class="song-card">
-                    <div class="song-info">
-                        <h3 class="song-title" id="songTitle"></h3>
-                        <p class="song-artist" id="songArtist"></p>
+                <!-- Scroll Instructions (Mobile Only) -->
+                <div class="scroll-instruction">
+                    <span class="scroll-icon">👉</span>
+                    <span>Swipe to explore all songs</span>
+                    <span class="scroll-icon">👈</span>
+                </div>
+                
+                <!-- Songs Container with Horizontal Scroll -->
+                <div class="songs-carousel">
+                    <div class="songs-container" id="songsContainer">
+                        <!-- Song cards will be dynamically inserted here -->
                     </div>
-
-                    <!-- Spotify Embed Player -->
-                    <div class="spotify-embed hidden" id="spotifyEmbed">
-                        <div class="embed-header">
-                            <span class="embed-icon">🎧</span>
-                            <span>Listen First</span>
-                            <span class="play-hint">▶️ Tap To Play</span>
-                        </div>
-                        <div class="iframe-wrapper">
-                            <iframe id="spotifyPlayer" 
-                                style="border-radius:12px" 
-                                width="100%" 
-                                height="152" 
-                                frameBorder="0" 
-                                allowfullscreen="" 
-                                allow="autoplay; encrypted-media; fullscreen; picture-in-picture" 
-                                loading="lazy">
-                            </iframe>
-                        </div>
-                    </div>
-                    
-                    <div class="song-summary">
-                        <p id="songSummary"></p>
-                    </div>
-
-                    <div class="song-actions">
-                        <a href="#" id="spotifyLink" target="_blank" class="btn-spotify">
-                            <span class="spotify-icon">🎵</span>
-                            Open In Spotify
-                        </a>
-                        <a href="#" id="googleSearchLink" target="_blank" class="btn-google hidden">
-                            <span class="google-icon">🔍</span>
-                            Search On Google
-                        </a>
-                        <button class="btn-secondary" id="tryAgainBtn">
-                            Find Another
-                        </button>
-                    </div>
+                </div>
+                
+                <!-- Try Again Button -->
+                <div class="try-again-section">
+                    <button class="btn-secondary" id="tryAgainBtn">
+                        Find Another
+                    </button>
                 </div>
             </div>
         </div>
