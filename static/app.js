@@ -21,12 +21,18 @@ let selectedFile = null;
 let uploadedImageDataUrl = null;
 let loadingMessageInterval = null;
 
-// API Base URL - change this if deploying
-// For local development, use: 'http://localhost:8000'
-// For production, use: 'https://song-suggestor-production.up.railway.app'
-const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-    ? 'http://localhost:8000' 
-    : 'https://song-suggestor-production.up.railway.app';  // Auto-detect environment
+// API Base URL - dynamically configured
+// For Vercel deployment, you need to set this in Vercel dashboard as environment variable
+const API_BASE_URL = (() => {
+    // Check for localhost
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return 'http://localhost:8000';
+    }
+    
+    // For Vercel production - always use Railway backend
+    // Make sure CORS is configured on Railway to allow your Vercel domain
+    return 'https://song-suggestor-production.up.railway.app';
+})();
 
 // Loading Messages Array - Persuasive and engaging messages
 const loadingMessages = [
