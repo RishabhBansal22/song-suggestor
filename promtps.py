@@ -22,5 +22,12 @@ def main_prompt(language, genre_text):
 *   **Instagram Story Fit:** The song should be engaging and suitable for a short video format.
 
 Based on your analysis, provide one song suggestion. The song must be in **{language}**. {genre_text}
+
+Your response must include:
+1. Song_title: The title of the recommended song
+2. Artist: The artist who performed the song
+3. Summary: A concise paragraph (2-3 sentences) explaining what you analyzed in the image and why this specific song matches the image's mood, context, and visual elements.
+
+Format your response as valid JSON with these three fields.
 """
     return song_sugg_prompt

@@ -8,6 +8,7 @@ import base64
 import time
 import webbrowser
 import json
+import mimetypes
 from typing import Optional, Dict, Any
 import logging
 from promtps import main_prompt
@@ -22,6 +23,7 @@ class Song(BaseModel):
     """Pydantic model for song data."""
     Song_title: str
     Artist: str
+    Summary: str  # Brief explanation of image analysis and song selection reasoning
 
 class Spotify:
     """Spotify API client for searching and retrieving track information."""
@@ -228,6 +230,48 @@ class Gemini:
         except IOError as e:
             logger.error(f"Error reading image file {image_path}: {e}")
             raise
+            
+    def _detect_mime_type(self, image_path: str) -> str:
+        """Detect MIME type of the image file.
+        
+        Args:
+            image_path: Path to the image file
+            
+        Returns:
+            Detected MIME type as string
+            
+        Raises:
+            ValueError: If MIME type cannot be detected
+        """
+        # Initialize mimetypes if needed
+        if not mimetypes.inited:
+            mimetypes.init()
+            
+        # Get MIME type based on file extension
+        mime_type, _ = mimetypes.guess_type(image_path)
+        
+        # If MIME type couldn't be detected from extension, try to determine by common image extensions
+        if not mime_type:
+            # Map common image extensions to MIME types
+            extension_map = {
+                '.jpg': 'image/jpeg',
+                '.jpeg': 'image/jpeg',
+                '.png': 'image/png',
+                '.gif': 'image/gif',
+                '.bmp': 'image/bmp',
+                '.webp': 'image/webp'
+            }
+            
+            file_ext = os.path.splitext(image_path.lower())[1]
+            mime_type = extension_map.get(file_ext)
+            
+        # Default to image/jpeg if we still couldn't determine the MIME type
+        if not mime_type:
+            logger.warning(f"Could not detect MIME type for {image_path}, defaulting to image/jpeg")
+            mime_type = 'image/jpeg'
+            
+        logger.info(f"Detected MIME type for {image_path}: {mime_type}")
+        return mime_type
 
     
 
@@ -251,12 +295,15 @@ class Gemini:
             genre_text = f"The preferred genre is {genre}." if genre else ""
             prompt = main_prompt(language, genre_text)
             
+            # Detect MIME type automatically
+            mime_type = self._detect_mime_type(image_path)
+            
             response = self.client.models.generate_content(
                 model="gemini-2.5-flash",
                 contents=[
                     types.Part.from_bytes(
                         data=self._read_image_bytes(image_path),
-                        mime_type='image/png'
+                        mime_type=mime_type
                     ),
                     prompt
                 ],
@@ -291,6 +338,10 @@ def main(image_path, language, genre) -> None:
         language = "English" if not language else language
         genre = genre
         
+        # Log detected MIME type (for debugging purposes)
+        mime_type = gemini_client._detect_mime_type(image_path)
+        logger.info(f"Detected MIME type for input image: {mime_type}")
+        
         # Generate song suggestion
         logger.info(f"Generating song suggestion for image: {image_path}")
         song_json = gemini_client.song_title_gen(image_path, language=language, genre=genre)
@@ -309,10 +360,16 @@ def main(image_path, language, genre) -> None:
             
         track_title = song_data.get("Song_title")
         artist_name = song_data.get("Artist")
+        analysis_summary = song_data.get("Summary", "No summary provided")
         
         if not track_title or not artist_name:
             logger.error("Invalid song data: missing title or artist")
             return
+            
+        # Display the AI's analysis and reasoning
+        print(f"\nImage Analysis & Reasoning:")
+        print(f"{analysis_summary}")
+        print("=" * 50)
 
         # Initialize Spotify client and search
         logger.info("Initializing Spotify client...")
@@ -347,8 +404,14 @@ def main(image_path, language, genre) -> None:
 
 
 if __name__ == "__main__":
+    # You can test with different image formats to ensure MIME type detection works correctly
+    image_path = r"D:\AI_coding\ig_song_suggestion\python_spotify\tests_static\image.png"
+    # Uncomment one of these to test other image formats:
+    # image_path = r"D:\AI_coding\ig_song_suggestion\python_spotify\tests_static\mahak_udaiput.jpeg"
+    # image_path = r"D:\AI_coding\ig_song_suggestion\python_spotify\tests_static\train_window.jpg"
+    
     main(
-        r"D:\AI_coding\ig_song_suggestion\python_spotify\image.png",
+        image_path,
         language="hindi",
         genre="bollywood"
     )
