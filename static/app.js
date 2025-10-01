@@ -29,7 +29,7 @@ let uploadedImageDataUrl = null;
 let loadingMessageInterval = null;
 
 // API Base URL - change this if deploying
-const API_BASE_URL = 'http://127.0.0.1:8000';  // Local development server
+const API_BASE_URL = 'https://song-suggestor-production.up.railway.app';  // Local development server
 
 // Loading Messages Array - Persuasive and engaging messages
 const loadingMessages = [
