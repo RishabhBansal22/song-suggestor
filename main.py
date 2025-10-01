@@ -126,39 +126,61 @@ class Spotify:
         # Ensure we have a valid token before making the request
         self._ensure_valid_token()
 
+        # Try multiple search strategies for better results
+        search_queries = []
+        
         if artist_name:
-            query = f"track:{track_name.strip()} artist:{artist_name.strip()}"
+            # Strategy 1: Use only the first artist if multiple artists are present
+            if ',' in artist_name:
+                first_artist = artist_name.split(',')[0].strip()
+                search_queries.append(f"track:{track_name.strip()} artist:{first_artist}")
+                logger.info(f"Multiple artists detected, using first artist: {first_artist}")
+            else:
+                search_queries.append(f"track:{track_name.strip()} artist:{artist_name.strip()}")
+            
+            # Strategy 2: Search with track name and full artist string (without field specifiers)
+            search_queries.append(f"{track_name.strip()} {artist_name.strip()}")
+            
+            # Strategy 3: Search with track name only as fallback
+            search_queries.append(f"track:{track_name.strip()}")
         else:
-            query = f"track:{track_name.strip()}"
+            search_queries.append(f"track:{track_name.strip()}")
             
         headers = {"Authorization": f"Bearer {self.token}"}
-        params = {"q": query, "type": "track", "limit": 1}
 
-        try:
-            response = requests.get(self.SEARCH_URL, headers=headers, params=params, timeout=30)
-            response.raise_for_status()
-            data = response.json()
+        # Try each search strategy until we find a result
+        for query in search_queries:
+            params = {"q": query, "type": "track", "limit": 1}
+            
+            try:
+                response = requests.get(self.SEARCH_URL, headers=headers, params=params, timeout=30)
+                response.raise_for_status()
+                data = response.json()
 
-            tracks = data.get("tracks", {}).get("items", [])
-            if tracks:
-                track = tracks[0]
-                return {
-                    "id": track["id"],
-                    "name": track["name"],
-                    "artist": track["artists"][0]["name"] if track.get("artists") else "Unknown",
-                    "preview_url": track.get("preview_url"),
-                    "spotify_url": track["external_urls"]["spotify"]
-                }
-            else:
-                logger.info(f"No tracks found for query: {query}")
-                return None
-                
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Error searching for track '{track_name}': {e}")
-            return None
-        except (KeyError, IndexError) as e:
-            logger.error(f"Error parsing track data for '{track_name}': {e}")
-            return None
+                tracks = data.get("tracks", {}).get("items", [])
+                if tracks:
+                    track = tracks[0]
+                    logger.info(f"Track found using query: {query}")
+                    return {
+                        "id": track["id"],
+                        "name": track["name"],
+                        "artist": track["artists"][0]["name"] if track.get("artists") else "Unknown",
+                        "preview_url": track.get("preview_url"),
+                        "spotify_url": track["external_urls"]["spotify"]
+                    }
+                else:
+                    logger.info(f"No tracks found for query: {query}")
+                    
+            except requests.exceptions.RequestException as e:
+                logger.error(f"Error searching for track with query '{query}': {e}")
+                continue
+            except (KeyError, IndexError) as e:
+                logger.error(f"Error parsing track data for query '{query}': {e}")
+                continue
+        
+        # If all strategies failed
+        logger.warning(f"All search strategies failed for track '{track_name}' by '{artist_name}'")
+        return None
 
 class Gemini:
     """Google Gemini AI client for image analysis and song suggestion."""
