@@ -23,7 +23,6 @@ class Song(BaseModel):
     """Pydantic model for song data."""
     Song_title: str
     Artist: str
-    Summary: str  # Brief explanation of image analysis and song selection reasoning
 
 class Songs(BaseModel):
     """Pydantic model for multiple song suggestions."""
@@ -387,16 +386,10 @@ def main(image_path, language, genre) -> None:
             
         track_title = song_data.get("Song_title")
         artist_name = song_data.get("Artist")
-        analysis_summary = song_data.get("Summary", "No summary provided")
         
         if not track_title or not artist_name:
             logger.error("Invalid song data: missing title or artist")
             return
-            
-        # Display the AI's analysis and reasoning
-        print(f"\nImage Analysis & Reasoning:")
-        print(f"{analysis_summary}")
-        print("=" * 50)
 
         # Initialize Spotify client and search
         logger.info("Initializing Spotify client...")

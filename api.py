@@ -48,7 +48,6 @@ class SingleSongResponse(BaseModel):
     """Response model for a single song."""
     song_title: str
     artist: str
-    summary: str
     spotify_url: str | None = None
     preview_url: str | None = None
     spotify_id: str | None = None
@@ -136,7 +135,6 @@ async def suggest_song(
             for idx, song_data in enumerate(song_list):
                 track_title = song_data.get("Song_title")
                 artist_name = song_data.get("Artist")
-                summary = song_data.get("Summary", "")
                 
                 if not track_title or not artist_name:
                     logger.warning(f"Invalid song data for song {idx + 1}, skipping")
@@ -163,7 +161,6 @@ async def suggest_song(
                 song_response = {
                     "song_title": track_title,
                     "artist": artist_name,
-                    "summary": summary,
                     "spotify_url": track_info.get("spotify_url") if track_info else None,
                     "preview_url": track_info.get("preview_url") if track_info else None,
                     "spotify_id": track_info.get("id") if track_info else None,
