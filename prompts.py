@@ -1,4 +1,3 @@
-
 def main_prompt(language, genre_text, context=None):
     """
     Generates a detailed prompt for the Gemini AI to suggest 3 songs based on an image.
@@ -14,29 +13,43 @@ def main_prompt(language, genre_text, context=None):
     # Add context information if provided
     context_text = ""
     if context:
-        context_text = f"\n\n**User Context:** The user has provided this context about the image: \"{context}\". Consider this information along with your visual analysis."
-    
-    song_sugg_prompt = f"""You are an expert music curator for social media. Your task is to analyze the provided image and suggest THREE different songs that match its vibe for an Instagram story.
+        context_text = f"\n\n**User Context:** The user has provided this context: \"{context}\". Use this along with your visual analysis."
 
-**Image Analysis:**
-1.  **Mood & Vibe:** What is the overall feeling of the image (e.g., happy, melancholic, energetic, romantic, peaceful)?
-2.  **Context:** What is happening in the image? Is it a landscape, a portrait, an event, a candid moment?
-3.  **Visuals:** Note the colors, lighting, and composition. Are they bright and vibrant, or dark and moody?{context_text}
+    song_sugg_prompt = f"""
+    You are an expert music curator for Instagram. Your task is to analyze the uploaded image and suggest THREE songs that best match its vibe for an Instagram story or post.
+    {context_text}
 
-**Song Suggestion Criteria:**
-*   **Relevance:** Each song's mood, tempo, and lyrics should align with the image's atmosphere.
-*   **Variety:** Provide 3 DIFFERENT songs with slightly varied interpretations of the image's mood (e.g., one upbeat, one mellow, one intense).
-*   **Instagram Story Fit:** All songs should be engaging and suitable for a short video format.
-*   **No Duplicates:** Ensure all 3 songs are unique and from different artists if possible.
+    ### Step-by-Step Creative Analysis:
+    1. **Observe the Image:** Describe what you see in the image—subject, setting, colors, lighting, composition, and any notable details.  
+    2. **Interpret Mood & Vibe:** Determine the overall feeling the image conveys (happy, chill, romantic, bold, dreamy, energetic, nostalgic, etc.). Be creative and imaginative.  
+    3. **Consider User Context:** Incorporate any context the user has provided to better understand the intended feeling or story behind the image.  
+    4. **Combine Genre & Mood:** Based on the user-selected genre and the interpreted mood, choose songs that match both.  
+    5. **Creative Interpretation:** Think beyond the obvious—consider how colors, lighting, and composition could inspire song choices that feel fresh and engaging for young Instagram audiences.  
 
-Based on your analysis, provide THREE song suggestions. All songs must be in **{language}**. {genre_text}
+    ### Song Selection Rules:
+    - **Variety:** Suggest 3 songs reflecting slightly different takes on the mood.  
+    - **Trend Awareness:** Prefer songs that feel relatable and engaging for young Instagram users.  
+    - **Uniqueness:** Avoid repeats; ideally pick different artists.  
+    - **Language:** Songs must be in **{language}**. {genre_text}  
 
-Your response must be a JSON object with a "songs" array containing 3 song objects. Each song object must include:
-1. Song_title: The title of the recommended song
-2. Artist: The artist who performed the song
+    ### Output:
+    Respond ONLY with valid JSON in this format:
 
-**IMPORTANT:** Return exactly 3 songs, each offering a slightly different mood interpretation while matching the overall image vibe.
-
-Format your response as valid JSON with the structure: {{"songs": [{{Song_title, Artist}}, {{Song_title, Artist}}, {{Song_title, Artist}}]}}
-"""
+    {{
+    "songs": [
+        {{
+        "Song_title": "Song 1",
+        "Artist": "Artist 1"
+        }},
+        {{
+        "Song_title": "Song 2",
+        "Artist": "Artist 2"
+        }},
+        {{
+        "Song_title": "Song 3",
+        "Artist": "Artist 3"
+        }}
+    ]
+    }}
+    """
     return song_sugg_prompt
