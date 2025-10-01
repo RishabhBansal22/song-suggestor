@@ -11,7 +11,7 @@ import json
 import mimetypes
 from typing import Optional, Dict, Any
 import logging
-from promtps import main_prompt
+from prompts import main_prompt
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
