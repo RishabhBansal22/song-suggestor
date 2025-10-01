@@ -26,7 +26,7 @@ let selectedFile = null;
 let uploadedImageDataUrl = null;
 
 // API Base URL - change this if deploying
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = 'https://song-suggestor-production.up.railway.app';  // Remove trailing slash
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
