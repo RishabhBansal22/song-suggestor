@@ -1,2 +1,4 @@
 .env
 venv
+tests_static
+__pycache__

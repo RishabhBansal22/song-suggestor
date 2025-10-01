@@ -10,6 +10,7 @@ import webbrowser
 import json
 from typing import Optional, Dict, Any
 import logging
+from promtps import main_prompt
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -230,7 +231,7 @@ class Gemini:
 
     
 
-    def song_title_gen(self, image_path: str, language: str = "English", genre: Optional[str] = None) -> str:
+    def song_title_gen(self, image_path: str, language: str = "English", genre:str="Asthetic") -> str:
         """Generate song suggestion based on image analysis.
         
         Args:
@@ -247,17 +248,15 @@ class Gemini:
         """
         try:
             # Build prompt based on parameters
-            genre_text = f" and {genre}" if genre else ""
-            prompt = (f"Based on the provided image, suggest a single song that will match "
-                     f"the vibe of the image for an Instagram story. You must suggest a song "
-                     f"in {language}{genre_text}.")
+            genre_text = f"The preferred genre is {genre}." if genre else ""
+            prompt = main_prompt(language, genre_text)
             
             response = self.client.models.generate_content(
                 model="gemini-2.5-flash",
                 contents=[
                     types.Part.from_bytes(
                         data=self._read_image_bytes(image_path),
-                        mime_type='image/jpeg'
+                        mime_type='image/png'
                     ),
                     prompt
                 ],
@@ -349,9 +348,9 @@ def main(image_path, language, genre) -> None:
 
 if __name__ == "__main__":
     main(
-        r"D:\AI_coding\ig_song_suggestion\python_spotify\train_window.jpg",
-        language="english",
-        genre="soft romantic"
+        r"D:\AI_coding\ig_song_suggestion\python_spotify\image.png",
+        language="hindi",
+        genre="bollywood"
     )
 
 
