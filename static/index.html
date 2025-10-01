@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibecheck - Song Suggestor 🎵</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Background gradients -->
+    <div class="bg-gradient"></div>
+    <div class="bg-gradient-2"></div>
+    
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1 class="logo">Vibecheck 🎵</h1>
+            <p class="tagline">Perfect Song For Your IG Story ✨</p>
+        </header>
+
+        <!-- Main Card -->
+        <div class="main-card">
+            <!-- Upload Section -->
+            <div class="upload-section" id="uploadSection">
+                <div class="upload-area" id="uploadArea">
+                    <input type="file" id="imageInput" accept="image/*" hidden>
+                    <div class="upload-content">
+                        <div class="upload-icon">📸</div>
+                        <h2>Upload Your Pic</h2>
+                        <p>Drag and Drop Or Tap To Browse</p>
+                        <button class="btn-primary" onclick="document.getElementById('imageInput').click()">
+                            Choose Photo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Image Preview -->
+                <div class="image-preview hidden" id="imagePreview">
+                    <img id="previewImg" src="" alt="Preview">
+                    <button class="btn-remove" id="removeBtn">✕</button>
+                </div>
+            </div>
+
+            <!-- Options Section -->
+            <div class="options-section">
+                <div class="option-group">
+                    <label for="languageSelect">language</label>
+                    <select id="languageSelect" class="select-input">
+                        <option value="English">English</option>
+                        <option value="Hindi">Hindi</option>
+                        <option value="Punjabi">Punjabi</option>
+                        <option value="Tamil">Tamil</option>
+                        <option value="Telugu">Telugu</option>
+                        <option value="Spanish">Spanish</option>
+                        <option value="Korean">Korean</option>
+                        <option value="Japanese">Japanese</option>
+                        <option value="French">French</option>
+                        <option value="German">German</option>
+                    </select>
+                </div>
+
+                <div class="option-group">
+                    <label for="genreSelect">what's the vibe?</label>
+                    <select id="genreSelect" class="select-input">
+                        <option value="Feeling Cute">feeling cute 💅</option>
+                        <option value="Main Character Energy">main character energy ✨</option>
+                        <option value="Sad Boi Hours">sad boi hours 😢</option>
+                        <option value="Travel Diaries">travel diaries ✈️</option>
+                        <option value="Outdoor Adventures">outdoor adventures �️</option>
+                        <option value="Late Night Drives">late night drives 🌃</option>
+                        <option value="Gym Motivation">gym motivation �</option>
+                        <option value="Festive Vibes">festive vibes 🎊</option>
+                        <option value="Cozy Vibes">cozy vibes ☕</option>
+                        <option value="Party Mode">party mode 🎉</option>
+                        <option value="Beach Vibes">beach vibes �</option>
+                        <option value="Study Session">study session 📚</option>
+                        <option value="Getting Ready">getting ready 💄</option>
+                        <option value="Morning Energy">morning energy ☀️</option>
+                        <option value="Aesthetic Feed">aesthetic feed 📸</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button class="btn-submit" id="submitBtn" disabled>
+                <span class="btn-submit-text">Get My Song ✨</span>
+            </button>
+
+            <!-- Loading State -->
+            <div class="loading hidden" id="loading">
+                <div class="spinner"></div>
+                <p>Finding Your Perfect Match...</p>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results hidden" id="results">
+                <div class="result-header">
+                    <h2>This One's For You 🎯</h2>
+                    <p class="result-subheader">Ready For Your Story</p>
+                </div>
+
+                <!-- IG Story Preview -->
+                <div class="ig-preview-section">
+                    <div class="section-label">
+                        <span class="label-icon">📱</span>
+                        <span>Preview Your Story</span>
+                    </div>
+                    <div class="ig-story-mockup">
+                        <div class="ig-story-frame">
+                            <img id="resultImagePreview" src="" alt="Your image">
+                            
+                            <!-- Play Button Overlay -->
+                            <button class="ig-play-button hidden" id="igPlayButton" title="Play song preview" aria-label="Play song preview">
+                                <span class="play-icon">▶️</span>
+                            </button>
+                            
+                            <div class="ig-song-overlay">
+                                <div class="ig-song-info">
+                                    <span class="music-icon">🎵</span>
+                                    <div class="ig-song-text">
+                                        <div class="ig-song-title" id="igSongTitle"></div>
+                                        <div class="ig-song-artist" id="igSongArtist"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="song-card">
+                    <div class="song-info">
+                        <h3 class="song-title" id="songTitle"></h3>
+                        <p class="song-artist" id="songArtist"></p>
+                    </div>
+
+                    <!-- Spotify Embed Player -->
+                    <div class="spotify-embed hidden" id="spotifyEmbed">
+                        <div class="embed-header">
+                            <span class="embed-icon">🎧</span>
+                            <span>Listen first</span>
+                            <span class="play-hint">▶️ Tap To Play</span>
+                        </div>
+                        <div class="iframe-wrapper">
+                            <iframe id="spotifyPlayer" 
+                                style="border-radius:12px" 
+                                width="100%" 
+                                height="152" 
+                                frameBorder="0" 
+                                allowfullscreen="" 
+                                allow="autoplay; encrypted-media; fullscreen; picture-in-picture" 
+                                loading="lazy">
+                            </iframe>
+                        </div>
+                    </div>
+                    
+                    <div class="song-summary">
+                        <p id="songSummary"></p>
+                    </div>
+
+                    <div class="song-actions">
+                        <a href="#" id="spotifyLink" target="_blank" class="btn-spotify">
+                            <span class="spotify-icon">🎵</span>
+                            Open In Spotify
+                        </a>
+                        <button class="btn-secondary" id="tryAgainBtn">
+                            Find Another
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Made With ❤️ By Rishabh</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

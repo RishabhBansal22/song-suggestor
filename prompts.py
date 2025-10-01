@@ -26,7 +26,7 @@ Based on your analysis, provide one song suggestion. The song must be in **{lang
 Your response must include:
 1. Song_title: The title of the recommended song
 2. Artist: The artist who performed the song
-3. Summary: A concise paragraph (2-3 sentences) explaining what you analyzed in the image and why this specific song matches the image's mood, context, and visual elements.
+3. Summary: A short and sweet summary in 20 words of explaining what you analyzed in the image and why this specific song matches the image's mood, context, and visual elements.
 
 Format your response as valid JSON with these three fields.
 """
