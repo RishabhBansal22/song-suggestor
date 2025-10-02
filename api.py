@@ -67,7 +67,7 @@ async def root():
 async def suggest_song(
     image: UploadFile = File(...),
     language: str = Form("English"),
-    genre: str = Form("Popular"),
+    genre: str = Form(None),
     context: str = Form(None)
 ):
     """
@@ -76,7 +76,7 @@ async def suggest_song(
     Args:
         image: Uploaded image file
         language: Preferred song language (default: English)
-        genre: Preferred genre/vibe (default: Popular)
+        genre: Optional preferred genre/vibe (deprecated, not used)
         context: Optional context about the image (e.g., "me with my brother")
     
     Returns:
@@ -95,7 +95,7 @@ async def suggest_song(
         temp_file_path = UPLOAD_DIR / f"temp_{os.getpid()}{file_extension}"
         
         logger.info(f"Processing image: {image.filename}")
-        logger.info(f"Language: {language}, Genre: {genre}")
+        logger.info(f"Language: {language}")
         if context:
             logger.info(f"Context: {context}")
         
@@ -112,7 +112,6 @@ async def suggest_song(
             song_json = gemini_client.song_title_gen(
                 str(temp_file_path),
                 language=language,
-                genre=genre,
                 context=context
             )
             
