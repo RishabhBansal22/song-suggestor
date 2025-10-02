@@ -8,12 +8,15 @@ A modern web application that analyzes your images using AI and suggests perfect
 
 ### Core Functionality
 - **AI-Powered Image Analysis** - Uses Google Gemini AI to understand image context, mood, and atmosphere
+- **🆕 Google Search Grounding** - Real-time web search to find currently trending songs on Instagram and social media
+- **Creative & Accurate** - Higher creativity (temperature 0.7) balanced with search-based accuracy
 - **Multiple Song Suggestions** - Get 3 curated song recommendations for each image
 - **Spotify Integration** - Direct links to songs on Spotify with preview capability
 - **Instagram Story Mockup** - Preview how your photo will look with the song overlay on your IG story
 - **Multi-Language Support** - 10+ languages including English, Hindi, Punjabi, Spanish, Korean, Japanese, and more
 - **Genre Customization** - Choose from 10+ mood categories (Pop, Romantic, Chill, Indie, Bollywood, etc.)
 - **Context-Aware** - Add optional context (e.g., "sunset with friends") for more accurate suggestions
+- **Trend-Aware** - Searches for songs trending NOW in October 2025 on Instagram, TikTok, and streaming platforms
 
 ### User Experience
 - **Beautiful Modern UI** - Responsive design with smooth animations and gradient backgrounds
@@ -31,7 +34,8 @@ A modern web application that analyzes your images using AI and suggests perfect
 
 ### Backend
 - **FastAPI** - High-performance Python web framework
-- **Google Gemini AI** - Advanced image analysis and song suggestion
+- **Google Gemini 2.0 Flash** - Latest AI model with advanced image analysis and song suggestion
+- **Google Search Grounding** - Real-time web search integration for trending song discovery
 - **Spotify Web API** - Music search and track information
 - **Uvicorn** - ASGI server for production deployment
 

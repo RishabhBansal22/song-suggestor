@@ -301,7 +301,12 @@ class Gemini:
     
 
     def song_title_gen(self, image_path: str, language: str = "English", genre:str="Asthetic", context: str = None) -> str:
-        """Generate multiple song suggestions based on image analysis.
+        """Generate multiple song suggestions based on image analysis with multi-level fallback.
+        
+        Strategy:
+        1. Try Google Search grounding with text output (most creative + trending)
+        2. If JSON parsing fails, use structured output to convert
+        3. If grounding fails entirely, fall back to normal structured output
         
         Args:
             image_path: Path to the image file
@@ -314,40 +319,139 @@ class Gemini:
             
         Raises:
             FileNotFoundError: If image file doesn't exist
-            Exception: If AI generation fails
+            Exception: If all generation methods fail
         """
+        # Build prompt and detect MIME type
+        genre_text = f"The preferred genre is {genre}." if genre else ""
+        mime_type = self._detect_mime_type(image_path)
+        image_bytes = self._read_image_bytes(image_path)
+        
+        # APPROACH 1: Try Google Search grounding (best for trending songs)
         try:
-            # Build prompt based on parameters
-            genre_text = f"The preferred genre is {genre}." if genre else ""
-            prompt = main_prompt(language, genre_text, context)
-            
-            # Detect MIME type automatically
-            mime_type = self._detect_mime_type(image_path)
-            
+            logger.info("🔍 Attempting Google Search grounding for trending songs...")
+            # Use grounding-enabled prompt
+            prompt = main_prompt(language, genre_text, context, use_grounding=True)
             response = self.client.models.generate_content(
-                model="gemini-2.5-flash",
+                model="gemini-2.0-flash-001",
                 contents=[
-                    types.Part.from_bytes(
-                        data=self._read_image_bytes(image_path),
-                        mime_type=mime_type
-                    ),
+                    types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
                     prompt
                 ],
-                config={
-                    "response_mime_type": "application/json",
-                    "response_schema": Songs
-                }
+                config=types.GenerateContentConfig(
+                    system_instruction="""You are an expert music curator for Instagram stories and reels.
+
+YOUR WORKFLOW:
+1. ANALYZE THE IMAGE: Identify mood, setting, activity, colors, and aesthetic
+2. CRAFT SPECIFIC SEARCH QUERIES: Combine the visual analysis with language/genre to search for matching trending songs
+   - Include image-specific context in queries (e.g., "beach sunset vibes", "city night energy", "melancholic rainy day")
+   - Don't just search "trending hindi songs" - search "trending hindi romantic beach sunset songs october 2025"
+3. SELECT PERFECT MATCHES: Choose songs that match BOTH the trending status AND the specific image vibe for young users.
+
+CRITICAL:
+- Your Google Search queries MUST incorporate the visual analysis from the image
+- Match songs to the SPECIFIC emotional and visual mood of the image, not just general trends
+- Always provide real, existing songs with accurate titles and artist names
+- Return ONLY valid JSON with exactly 3 songs by different artists
+
+Example of GOOD search query formation:
+Image shows: Golden hour beach photo with couple
+Search: "trending hindi romantic beach golden hour songs instagram"
+
+Example of BAD search query:
+Image shows: Golden hour beach photo with couple  
+Search: "trending hindi songs october 2025" ❌ (too generic, missing image context)""",
+                    tools=[{"google_search": {}}],
+                    temperature=0.7,
+                    top_p=0.95,
+                    top_k=40,
+                    max_output_tokens=2000,
+                    candidate_count=1,
+                )
             )
 
-            if not response.text:
-                raise ValueError("Empty response from Gemini AI")
+            if response.text:
+                # Log grounding information
+                try:
+                    if response.candidates and len(response.candidates) > 0:
+                        candidate = response.candidates[0]
+                        if hasattr(candidate, 'grounding_metadata') and candidate.grounding_metadata:
+                            grounding_meta = candidate.grounding_metadata
+                            if hasattr(grounding_meta, 'web_search_queries') and grounding_meta.web_search_queries:
+                                logger.info(f"   Search queries: {grounding_meta.web_search_queries}")
+                            if hasattr(grounding_meta, 'grounding_chunks') and grounding_meta.grounding_chunks:
+                                logger.info(f"   Grounded with {len(grounding_meta.grounding_chunks)} web sources")
+                except Exception as meta_error:
+                    logger.debug(f"Could not extract grounding metadata: {meta_error}")
                 
-            logger.info(f"Song suggestions generated for image: {image_path}")
-            return response.text
+                grounded_text = response.text
+                logger.info(f"   Received grounded response ({len(grounded_text)} chars)")
+                
+                # APPROACH 2: Always use structured output to convert grounded text to JSON
+                # (Skip JSON parsing as it frequently fails)
+                try:
+                    logger.info("🔄 Converting grounded response to JSON with structured output...")
+                    structure_response = self.client.models.generate_content(
+                        model="gemini-2.0-flash-001",
+                        contents=f"""Extract song suggestions from this text as JSON with exactly 3 songs:
+
+{grounded_text}""",
+                        config=types.GenerateContentConfig(
+                            response_mime_type="application/json",
+                            response_schema=Songs,
+                            temperature=0.1,
+                        )
+                    )
+                    
+                    if structure_response.text:
+                        # Validate the structured response
+                        validated = json.loads(structure_response.text)
+                        if "songs" in validated and len(validated["songs"]) >= 3:
+                            logger.info("✅ Successfully converted grounded response to JSON")
+                            return structure_response.text
+                except Exception as convert_error:
+                    logger.warning(f"   Conversion failed: {convert_error}")
+        
+        except Exception as grounding_error:
+            logger.warning(f"⚠️  Grounding approach failed: {grounding_error}")
+        
+        # APPROACH 3: Fallback to normal structured output (no grounding)
+        try:
+            logger.info("🔄 Falling back to standard structured output (no grounding)...")
+            # Use non-grounding prompt (no mention of Google Search)
+            fallback_prompt = main_prompt(language, genre_text, context, use_grounding=False)
+            response = self.client.models.generate_content(
+                model="gemini-2.0-flash-001",
+                contents=[
+                    types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
+                    fallback_prompt
+                ],
+                config=types.GenerateContentConfig(
+                    system_instruction="""You are an expert music curator for Instagram.
+Suggest songs that match the image's mood and vibe.
+Provide real, existing songs with accurate titles and artist names.""",
+                    response_mime_type="application/json",
+                    response_schema=Songs,
+                    temperature=0.5,
+                    top_p=0.95,
+                    top_k=40,
+                    max_output_tokens=800,
+                )
+            )
             
-        except Exception as e:
-            logger.error(f"Error generating song suggestions for {image_path}: {e}")
-            raise
+            if response.text:
+                # Validate the response
+                validated = json.loads(response.text)
+                if "songs" in validated and len(validated["songs"]) >= 3:
+                    logger.info("✅ Standard structured output successful")
+                    return response.text
+                else:
+                    raise ValueError("Invalid song count in fallback response")
+            else:
+                raise ValueError("Empty response from fallback method")
+                
+        except Exception as fallback_error:
+            logger.error(f"❌ All approaches failed. Last error: {fallback_error}")
+            raise Exception(f"Failed to generate song suggestions after all attempts: {fallback_error}")
         
 
 
@@ -438,9 +542,9 @@ if __name__ == "__main__":
 
 
 
-    
 
-    
+
+
 
 
 

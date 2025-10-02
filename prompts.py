@@ -1,55 +1,62 @@
-def main_prompt(language, genre_text, context=None):
+def main_prompt(language, genre_text, context=None, use_grounding=True):
     """
-    Generates a detailed prompt for the Gemini AI to suggest 3 songs based on an image.
+    Generates a concise prompt for the Gemini AI to suggest 3 songs based on an image.
 
     Args:
         language (str): The desired language for the song suggestion.
         genre_text (str): A formatted string specifying the genre preference.
         context (str, optional): User-provided context about the image.
+        use_grounding (bool): Whether Google Search grounding is available.
 
     Returns:
-        str: The complete, detailed prompt for the AI.
+        str: A concise, focused prompt for the AI.
     """
-    # Add context information if provided
-    context_text = ""
-    if context:
-        context_text = f"\n\n**User Context:** The user has provided this context: \"{context}\". Use this along with your visual analysis."
+    context_text = f"\n\nUser context: {context}" if context else ""
+    
+    # Different prompts based on whether grounding is available
+    if use_grounding:
+        # Prompt for when Google Search grounding is available
+        song_sugg_prompt = f"""STEP 1 - ANALYZE THE IMAGE:
+First, carefully examine this image and identify:
+- Primary mood/emotion (happy, melancholic, energetic, peaceful, romantic, etc.)
+- Visual setting (beach, city, nature, indoor, party, travel, etc.)
+- Activity or theme (celebration, relaxation, adventure, friendship, love, etc.)
+- Lighting and colors (golden hour, neon lights, dark and moody, bright and vibrant, etc.)
+- Overall vibe/aesthetic (vintage, modern, minimalist, cinematic, candid, etc.)
 
-    song_sugg_prompt = f"""
-    You are an expert music curator for Instagram. Your task is to analyze the uploaded image and suggest THREE songs that best match its vibe for an Instagram story or post.
-    {context_text}
+STEP 2 - USE GOOGLE SEARCH TO FIND MATCHING SONGS:
+Based on your image analysis, use Google Search to find trending {language} songs that match these specific visual characteristics.
 
-    ### Step-by-Step Creative Analysis:
-    1. **Observe the Image:** Describe what you see in the image—subject, setting, colors, lighting, composition, and any notable details.  
-    2. **Interpret Mood & Vibe:** Determine the overall feeling the image conveys (happy, chill, romantic, bold, dreamy, energetic, nostalgic, etc.). Be creative and imaginative.  
-    3. **Consider User Context:** Incorporate any context the user has provided to better understand the intended feeling or story behind the image.  
-    4. **Combine Genre & Mood:** Based on the user-selected genre and the interpreted mood, choose songs that match both.  
-    5. **Creative Interpretation:** Think beyond the obvious—consider how colors, lighting, and composition could inspire song choices that feel fresh and engaging for young Instagram audiences.  
+When searching, combine:
+1. The language and genre: "{language}" and "{genre_text if genre_text else 'appropriate genre'}"
+2. The image's specific mood/vibe you identified (e.g., "romantic", "energetic", "melancholic")
+3. The setting/theme (e.g., "beach vibes", "city night", "road trip")
+4. Current trends: "october 2025 instagram tiktok trending"
 
-    ### Song Selection Rules:
-    - **Variety:** Suggest 3 songs reflecting slightly different takes on the mood.  
-    - **Trend Awareness:** Prefer songs that feel relatable and engaging for young Instagram users.  
-    - **Uniqueness:** Avoid repeats; ideally pick different artists.  
-    - **Language:** Songs must be in **{language}**. {genre_text}  
+Example search queries you should generate:
+- "trending {language} romantic beach songs instagram"
+- "popular {language} energetic party anthems tiktok"
+- "viral {language} melancholic indie songs 2025"
 
-    ### Output:
-    Respond ONLY with valid JSON in this format:
+STEP 3 - PROVIDE RESULTS:
+Suggest 3 different songs by different artists that:
+- Match the SPECIFIC mood and setting you identified in the image
+- Are currently trending on Instagram/TikTok (based on your search)
+- Are in {language} language
+- {genre_text if genre_text else "Fit the appropriate genre"}
 
-    {{
-    "songs": [
-        {{
-        "Song_title": "Song 1",
-        "Artist": "Artist 1"
-        }},
-        {{
-        "Song_title": "Song 2",
-        "Artist": "Artist 2"
-        }},
-        {{
-        "Song_title": "Song 3",
-        "Artist": "Artist 3"
-        }}
-    ]
-    }}
-    """
+Provide exact song titles and artist names.{context_text}"""
+    else:
+        # Prompt for fallback without grounding (rely on training data)
+        song_sugg_prompt = f"""Analyze this image and suggest 3 songs for an Instagram story that match its mood and vibe.{context_text}
+
+Requirements:
+- All songs MUST be in {language} language
+- {genre_text if genre_text else "Match the genre to the image's mood"}
+- Suggest popular, well-known songs that fit the vibe
+- Provide exact song titles and artist names
+- Each song should be by a different artist
+
+Consider the image's colors, lighting, mood, setting, and emotional atmosphere when choosing songs."""
+    
     return song_sugg_prompt
