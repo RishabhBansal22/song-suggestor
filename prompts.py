@@ -28,7 +28,7 @@ STEP 2 - USE GOOGLE SEARCH TO FIND MATCHING SONGS:
 Based on your image analysis, use Google Search to find trending {language} songs that match these specific visual characteristics.
 
 When searching, combine:
-1. The language and genre: "{language}" and "{genre_text if genre_text else 'appropriate genre'}"
+1. The language: "{language}"
 2. The image's specific mood/vibe you identified (e.g., "romantic", "energetic", "melancholic")
 3. The setting/theme (e.g., "beach vibes", "city night", "road trip")
 4. Current trends: "october 2025 instagram tiktok trending"
@@ -43,7 +43,7 @@ Suggest 3 different songs by different artists that:
 - Match the SPECIFIC mood and setting you identified in the image
 - Are currently trending on Instagram/TikTok (based on your search)
 - Are in {language} language
-- {genre_text if genre_text else "Fit the appropriate genre"}
+- Fit the appropriate genre based on the image's vibe
 
 Provide exact song titles and artist names.{context_text}"""
     else:
@@ -52,7 +52,7 @@ Provide exact song titles and artist names.{context_text}"""
 
 Requirements:
 - All songs MUST be in {language} language
-- {genre_text if genre_text else "Match the genre to the image's mood"}
+- Match the genre to the image's mood and atmosphere
 - Suggest popular, well-known songs that fit the vibe
 - Provide exact song titles and artist names
 - Each song should be by a different artist

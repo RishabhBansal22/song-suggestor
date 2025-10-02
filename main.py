@@ -300,7 +300,7 @@ class Gemini:
 
     
 
-    def song_title_gen(self, image_path: str, language: str = "English", genre:str="Asthetic", context: str = None) -> str:
+    def song_title_gen(self, image_path: str, language: str = "English", genre: str = None, context: str = None) -> str:
         """Generate multiple song suggestions based on image analysis with multi-level fallback.
         
         Strategy:
@@ -311,7 +311,7 @@ class Gemini:
         Args:
             image_path: Path to the image file
             language: Language preference for the song (default: English)
-            genre: Optional genre preference
+            genre: Optional genre preference (deprecated, kept for backward compatibility)
             context: Optional user-provided context about the image
             
         Returns:
@@ -321,8 +321,8 @@ class Gemini:
             FileNotFoundError: If image file doesn't exist
             Exception: If all generation methods fail
         """
-        # Build prompt and detect MIME type
-        genre_text = f"The preferred genre is {genre}." if genre else ""
+        # Build prompt and detect MIME type (genre is no longer used)
+        genre_text = ""
         mime_type = self._detect_mime_type(image_path)
         image_bytes = self._read_image_bytes(image_path)
         
@@ -332,7 +332,7 @@ class Gemini:
             # Use grounding-enabled prompt
             prompt = main_prompt(language, genre_text, context, use_grounding=True)
             response = self.client.models.generate_content(
-                model="gemini-2.0-flash-001",
+                model="gemini-2.5-flash",
                 contents=[
                     types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
                     prompt

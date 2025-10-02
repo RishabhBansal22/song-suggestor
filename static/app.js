@@ -6,7 +6,6 @@ const imagePreview = document.getElementById('imagePreview');
 const previewImg = document.getElementById('previewImg');
 const removeBtn = document.getElementById('removeBtn');
 const languageSelect = document.getElementById('languageSelect');
-const genreSelect = document.getElementById('genreSelect');
 const contextInput = document.getElementById('contextInput');
 const submitBtn = document.getElementById('submitBtn');
 const loading = document.getElementById('loading');
@@ -189,7 +188,6 @@ async function handleSubmit() {
     }
     
     const language = languageSelect.value;
-    const genre = genreSelect.value;
     const context = contextInput.value.trim();
     
     // Show loading state
@@ -213,7 +211,6 @@ async function handleSubmit() {
         const formData = new FormData();
         formData.append('image', selectedFile);
         formData.append('language', language);
-        formData.append('genre', genre);
         if (context) {
             formData.append('context', context);
         }
