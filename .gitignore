@@ -2,3 +2,4 @@
 venv
 tests_static
 __pycache__
+test_fallback_mechanisms.py
